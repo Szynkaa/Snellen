@@ -24,13 +24,13 @@ void print(const char* string) {
 	}
 }
 
-void printN(const char* string, int length) {
+void printN(const char* string, const int length) {
 	for (int i = 0; i < length; i++) {
 		printChar(string[i]);
 	}
 }
 
-void printChar(char character) {
+void printChar(const char character) {
 	while (!(LPC_UART0->LSR & 1 << 5));
 	LPC_UART0->THR = character;
 }

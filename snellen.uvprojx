@@ -7,7 +7,7 @@
 
   <Targets>
     <Target>
-      <TargetName>Target 1</TargetName>
+      <TargetName>LPC1768</TargetName>
       <ToolsetNumber>0x4</ToolsetNumber>
       <ToolsetName>ARM-ADS</ToolsetName>
       <pArmCC>6110000::V6.11::.\ARMCLANG</pArmCC>
@@ -389,26 +389,6 @@
               <FilePath>.\src\main.c</FilePath>
             </File>
             <File>
-              <FileName>console.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\src\console.c</FilePath>
-            </File>
-            <File>
-              <FileName>console.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>.\src\console.h</FilePath>
-            </File>
-            <File>
-              <FileName>epaper.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\src\epaper.c</FilePath>
-            </File>
-            <File>
-              <FileName>epaper.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>.\src\epaper.h</FilePath>
-            </File>
-            <File>
               <FileName>util.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\src\util.c</FilePath>
@@ -417,6 +397,66 @@
               <FileName>util.h</FileName>
               <FileType>5</FileType>
               <FilePath>.\src\util.h</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>board</GroupName>
+          <Files>
+            <File>
+              <FileName>systick.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\src\board\systick.c</FilePath>
+            </File>
+            <File>
+              <FileName>systick.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\src\board\systick.h</FilePath>
+            </File>
+            <File>
+              <FileName>keys.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\src\board\keys.c</FilePath>
+            </File>
+            <File>
+              <FileName>keys.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\src\board\keys.h</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>device</GroupName>
+          <Files>
+            <File>
+              <FileName>console.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\src\device\console.c</FilePath>
+            </File>
+            <File>
+              <FileName>console.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\src\device\console.h</FilePath>
+            </File>
+            <File>
+              <FileName>epaper.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\src\device\epaper.c</FilePath>
+            </File>
+            <File>
+              <FileName>epaper.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\src\device\epaper.h</FilePath>
+            </File>
+            <File>
+              <FileName>keypad.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\src\device\keypad.c</FilePath>
+            </File>
+            <File>
+              <FileName>keypad.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\src\device\keypad.h</FilePath>
             </File>
           </Files>
         </Group>
@@ -436,25 +476,25 @@
       <component Cclass="CMSIS" Cgroup="CORE" Cvendor="ARM" Cversion="5.1.2" condition="ARMv6_7_8-M Device">
         <package name="CMSIS" schemaVersion="1.3" url="http://www.keil.com/pack/" vendor="ARM" version="5.4.0"/>
         <targetInfos>
-          <targetInfo name="Target 1"/>
+          <targetInfo name="LPC1768"/>
         </targetInfos>
       </component>
       <component Cclass="Device" Cgroup="GPDMA" Cvendor="Keil" Cversion="1.2.0" condition="LPC17xx CMSIS Device">
         <package name="LPC1700_DFP" schemaVersion="1.2" url="http://www.keil.com/pack/" vendor="Keil" version="2.6.1"/>
         <targetInfos>
-          <targetInfo name="Target 1"/>
+          <targetInfo name="LPC1768"/>
         </targetInfos>
       </component>
       <component Cclass="Device" Cgroup="PIN" Cvendor="Keil" Cversion="1.0.0" condition="LPC1700 CMSIS Device">
         <package name="LPC1700_DFP" schemaVersion="1.2" url="http://www.keil.com/pack/" vendor="Keil" version="2.6.1"/>
         <targetInfos>
-          <targetInfo name="Target 1"/>
+          <targetInfo name="LPC1768"/>
         </targetInfos>
       </component>
       <component Cclass="Device" Cgroup="Startup" Cvendor="Keil" Cversion="1.0.0" condition="LPC17xx CMSIS Device ARMCC">
         <package name="LPC1700_DFP" schemaVersion="1.2" url="http://www.keil.com/pack/" vendor="Keil" version="2.6.1"/>
         <targetInfos>
-          <targetInfo name="Target 1"/>
+          <targetInfo name="LPC1768"/>
         </targetInfos>
       </component>
     </components>
@@ -464,7 +504,7 @@
         <component Cclass="Device" Cgroup="Startup" Cvendor="Keil" Cversion="1.0.0" condition="LPC17xx CMSIS Device ARMCC"/>
         <package name="LPC1700_DFP" schemaVersion="1.2" url="http://www.keil.com/pack/" vendor="Keil" version="2.6.1"/>
         <targetInfos>
-          <targetInfo name="Target 1"/>
+          <targetInfo name="LPC1768"/>
         </targetInfos>
       </file>
       <file attr="config" category="source" condition="LPC176x" name="Device\Source\ARM\startup_LPC17xx.s" version="1.0.0">
@@ -472,7 +512,7 @@
         <component Cclass="Device" Cgroup="Startup" Cvendor="Keil" Cversion="1.0.0" condition="LPC17xx CMSIS Device ARMCC"/>
         <package name="LPC1700_DFP" schemaVersion="1.2" url="http://www.keil.com/pack/" vendor="Keil" version="2.6.1"/>
         <targetInfos>
-          <targetInfo name="Target 1"/>
+          <targetInfo name="LPC1768"/>
         </targetInfos>
       </file>
       <file attr="config" category="source" condition="LPC176x" name="Device\Source\system_LPC17xx.c" version="1.0.0">
@@ -480,7 +520,7 @@
         <component Cclass="Device" Cgroup="Startup" Cvendor="Keil" Cversion="1.0.0" condition="LPC17xx CMSIS Device ARMCC"/>
         <package name="LPC1700_DFP" schemaVersion="1.2" url="http://www.keil.com/pack/" vendor="Keil" version="2.6.1"/>
         <targetInfos>
-          <targetInfo name="Target 1"/>
+          <targetInfo name="LPC1768"/>
         </targetInfos>
       </file>
     </files>

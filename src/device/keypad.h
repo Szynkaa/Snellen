@@ -1,0 +1,2 @@
+void initializeKeypad();
+int readKeypad();

@@ -21,16 +21,16 @@ void initializeEPaper() {
 	NVIC_EnableIRQ(UART2_IRQn);
 }
 
-void ePaperSendByte(unsigned char byte) {
+void ePaperSendByte(const uint8_t byte) {
 	while (!(LPC_UART2->LSR & 1 << 5));
 	LPC_UART2->THR = byte;
 }
 
-void ePaperSendCommand(EPaperCommand command, const void* data, uint16_t dataLength) {
-	const unsigned char* dataBytes = data;
-	uint16_t frameLength = dataLength + 9;
+void ePaperSendCommand(const EPaperCommand command, const void* data, const uint16_t dataLength) {
+	const uint8_t* dataBytes = data;
+	const uint16_t frameLength = dataLength + 9;
 
-	unsigned char parity = 0xa5 ^ (frameLength >> 8) ^ (frameLength & 0xff) ^ command;
+	uint8_t parity = 0xa5 ^ (frameLength >> 8) ^ (frameLength & 0xff) ^ command;
 	ePaperSendByte(0xa5);
 	ePaperSendByte(frameLength >> 8);
 	ePaperSendByte(frameLength & 0xff);

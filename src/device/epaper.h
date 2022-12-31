@@ -23,5 +23,5 @@ typedef enum {
 } EPaperCommand;
 
 void initializeEPaper();
-void ePaperSendByte(unsigned char byte);
-void ePaperSendCommand(EPaperCommand command, const void* data, uint16_t dataLength);
+void ePaperSendByte(const uint8_t byte);
+void ePaperSendCommand(const EPaperCommand command, const void* data, const uint16_t dataLength);
