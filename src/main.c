@@ -1,4 +1,3 @@
-#include <stdio.h>
 #include <stdbool.h>
 #include <string.h>
 
@@ -12,12 +11,9 @@
 #include "util.h"
 
 
-void UART2_IRQHandler() {
-	print("received: ");
-	while (LPC_UART2->LSR & 1) {
-		printChar(LPC_UART2->RBR);
-	}
-	print("\r\n");
+void EINT3_IRQHandler() {
+	LPC_SC->EXTINT = 1 << 3;
+	checkKeypadInterrupt();
 }
 
 int main() {
@@ -58,10 +54,12 @@ int main() {
 	//	ePaperSendCommand(EPAPER_REFRESH, NULL, 0);
 
 	while (true) {
-		int result = readKeypad();
+		if (readLengthFromKeypad) {
+			int result = readKeypad();
 
-		char buffer[32];
-		sprintf(buffer, "%04x\r\n", result);
-		print(buffer);
+			char buffer[32];
+			sprintf(buffer, "%04x\r\n", result);
+			print(buffer);
+		}
 	}
 }

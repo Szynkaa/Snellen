@@ -2,7 +2,17 @@
 #include "PIN_LPC17xx.h"
 
 #include "epaper.h"
+#include "console.h"
 
+
+// redirect everything comming from epaper to console
+void UART2_IRQHandler() {
+	print("received: ");
+	while (LPC_UART2->LSR & 1) {
+		printChar(LPC_UART2->RBR);
+	}
+	print("\r\n");
+}
 
 void initializeEPaper() {
 	LPC_SC->PCONP |= 1 << 24;
