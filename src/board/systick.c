@@ -15,18 +15,18 @@ void initializeSysTick(const uint32_t secondsNumerator, const uint32_t secondsDe
 }
 
 void SysTick_Handler() {
-	if (eint0DeadTime > 0) {
-		--eint0DeadTime;
-	}
-	
+    if (eint0DeadTime > 0) {
+        --eint0DeadTime;
+    }
+    
     if (eint1DeadTime > 0) {
         --eint1DeadTime;
     }
-	
-	if (keypadDeadTime > 0) {
-		--keypadDeadTime;
-	}
-	
+    
+    if (keypadDeadTime > 0) {
+        --keypadDeadTime;
+    }
+    
     sysTickTimer++;
 }
 

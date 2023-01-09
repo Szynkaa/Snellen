@@ -46,17 +46,17 @@ void initializeKeypad() {
 }
 
 int readKeypad() {
-	print("keypad read\r\n");
-	
-	for (volatile int i = 2000; i > 0; i--);
+    print("keypad read\r\n");
+    
+    for (volatile int i = 2000; i > 0; i--);
 
     // set all input pins high
     for (int input_pin_index = 0; input_pin_index < inputSize; input_pin_index++) {
         inputPorts[input_pin_index]->FIOSET = 1 << inputPins[input_pin_index];
     }
-	
+    
     for (volatile int i = 2000; i > 0; i--);
-	
+    
     int result = 0;
     for (int input_pin_index = 0; input_pin_index < inputSize; input_pin_index++) {
         inputPorts[input_pin_index]->FIOCLR = 1 << inputPins[input_pin_index];
@@ -70,43 +70,43 @@ int readKeypad() {
 
         for (volatile int i = 2000; i > 0; i--);
     }
-	
-	// set all input pins to open drain
+    
+    // set all input pins to open drain
     for (int input_pin_index = 0; input_pin_index < inputSize; input_pin_index++) {
         inputPorts[input_pin_index]->FIOCLR = 1 << inputPins[input_pin_index];
     }
-	
-	readLengthFromKeypad = false;
-	
+    
+    readLengthFromKeypad = false;
+    
     return result;
 }
 
-void checkKeypadInterrupt() {	
-	int state = LPC_GPIOINT->IO0IntStatF;
-	
-	bool interruptPresent = false;
-	for (int output_pin_index = 0; output_pin_index < outputSize; output_pin_index++) {
+void checkKeypadInterrupt() {    
+    int state = LPC_GPIOINT->IO0IntStatF;
+    
+    bool interruptPresent = false;
+    for (int output_pin_index = 0; output_pin_index < outputSize; output_pin_index++) {
         if (state & 1 << outputPins[output_pin_index]) {
-			interruptPresent = true;
+            interruptPresent = true;
         }
     }
-	
+    
     if (keypadDeadTime > 0) {
-		LPC_GPIOINT->IO0IntClr = (1 << outputPins[0]) | (1 << outputPins[1]) | (1 << outputPins[2]) | (1 << outputPins[3]);
-		
+        LPC_GPIOINT->IO0IntClr = (1 << outputPins[0]) | (1 << outputPins[1]) | (1 << outputPins[2]) | (1 << outputPins[3]);
+        
         return;
     }
-	
-	if (!interruptPresent) {
-		LPC_GPIOINT->IO0IntClr = (1 << outputPins[0]) | (1 << outputPins[1]) | (1 << outputPins[2]) | (1 << outputPins[3]);
-		
-		return;
-	}
-	
-	keypadDeadTime = 120;
-	readLengthFromKeypad = interruptPresent;
-	
+    
+    if (!interruptPresent) {
+        LPC_GPIOINT->IO0IntClr = (1 << outputPins[0]) | (1 << outputPins[1]) | (1 << outputPins[2]) | (1 << outputPins[3]);
+        
+        return;
+    }
+    
+    keypadDeadTime = 120;
+    readLengthFromKeypad = interruptPresent;
+    
     for (volatile int i = 2000; i > 0; i--);
-	
-	LPC_GPIOINT->IO0IntClr = (1 << outputPins[0]) | (1 << outputPins[1]) | (1 << outputPins[2]) | (1 << outputPins[3]);
+    
+    LPC_GPIOINT->IO0IntClr = (1 << outputPins[0]) | (1 << outputPins[1]) | (1 << outputPins[2]) | (1 << outputPins[3]);
 }
