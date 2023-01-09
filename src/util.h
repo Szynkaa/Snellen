@@ -2,4 +2,4 @@
 
 
 uint16_t swapEndianness(uint16_t x);
-int keypadCodeToDigit(int code);
+int keypadCodeToDigit(uint16_t code);

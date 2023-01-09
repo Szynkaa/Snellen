@@ -13,7 +13,7 @@
 
 
 void EINT3_IRQHandler() {
-	LPC_SC->EXTINT = 1 << 3;
+	LPC_SC->EXTINT = 1 << 3; // clear external interrupt flag
 	checkKeypadInterrupt();
 }
 
@@ -57,7 +57,7 @@ int main() {
 	NVIC_EnableIRQ(EINT3_IRQn);
 
 	while (true) {
-		if (readLengthFromKeypad) {
+		if (keypadPendingRead) {
 			int result = readKeypad();
 
 			char buffer[32];
