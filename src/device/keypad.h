@@ -1,6 +1,6 @@
 #include <stdbool.h>
 
-extern bool readLengthFromKeypad;
+extern volatile bool readLengthFromKeypad;
 
 void initializeKeypad();
 int readKeypad();

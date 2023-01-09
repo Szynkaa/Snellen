@@ -1,5 +1,6 @@
 #include <stdbool.h>
 #include <string.h>
+#include <stdio.h>
 
 #include "LPC17xx.h"
 
@@ -11,8 +12,26 @@
 #include "util.h"
 
 
+//void HardFault_Handler() {
+//	print("HARD FAULT\r\n");
+//}
+
+//void UsageFault_Handler() {
+//	print("USAGE FAULT\r\n");
+//}
+
+//void BusFault_Handler() {
+//	print("BUS FAULT\r\n");
+//}
+
+//void MemManage_Handler() {
+//	print("MEM MANAGE\r\n");
+//}
+
 void EINT3_IRQHandler() {
 	LPC_SC->EXTINT = 1 << 3;
+	
+	print("HERE\r\n");
 	checkKeypadInterrupt();
 }
 
@@ -52,13 +71,15 @@ int main() {
 	//	ePaperSendCommand(EPAPER_DISPLAY_IMAGE, imageData, sizeof(imageData));
 	//	
 	//	ePaperSendCommand(EPAPER_REFRESH, NULL, 0);
+	
+	NVIC_EnableIRQ(EINT3_IRQn);
 
 	while (true) {
 		if (readLengthFromKeypad) {
 			int result = readKeypad();
 
 			char buffer[32];
-			sprintf(buffer, "%04x\r\n", result);
+			sprintf(buffer, "%04x (%d)\r\n", result, keypadCodeToDigit(result));
 			print(buffer);
 		}
 	}
