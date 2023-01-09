@@ -5,7 +5,7 @@
 #include "console.h"
 
 
-// redirect everything comming from epaper to console
+// redirect everything coming in from epaper to console
 void UART2_IRQHandler() {
 	print("received: ");
 	while (LPC_UART2->LSR & 1) {

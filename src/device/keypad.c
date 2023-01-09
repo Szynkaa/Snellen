@@ -50,7 +50,7 @@ int readKeypad() {
 	
 	for (volatile int i = 2000; i > 0; i--);
 
-	// set all input pins high
+    // set all input pins high
     for (int input_pin_index = 0; input_pin_index < inputSize; input_pin_index++) {
         inputPorts[input_pin_index]->FIOSET = 1 << inputPins[input_pin_index];
     }
@@ -75,35 +75,14 @@ int readKeypad() {
     for (int input_pin_index = 0; input_pin_index < inputSize; input_pin_index++) {
         inputPorts[input_pin_index]->FIOCLR = 1 << inputPins[input_pin_index];
     }
-		
-    // enable interrupts from output pins after 
-//    if (result == 0) {
-//		return 0;
-//    }
-
+	
 	readLengthFromKeypad = false;
 	
-//	print("enabling interrupt\r\n");
-//	NVIC_DisableIRQ(EINT3_IRQn);
-//	for (int output_pin_index = 0; output_pin_index < outputSize; output_pin_index++) {
-//		LPC_GPIOINT->IO0IntEnF |= 1 << outputPins[output_pin_index];
-//		
-//		print("just enabled interrupt for pin ");
-//		printChar('0' + output_pin_index);
-//		print("\r\n");
-//	}
-//	NVIC_EnableIRQ(EINT3_IRQn);
-//	print("enabled interrupt\r\n");
-
     return result;
 }
 
 void checkKeypadInterrupt() {	
 	int state = LPC_GPIOINT->IO0IntStatF;
-	
-//	for (int output_pin_index = 0; output_pin_index < outputSize; output_pin_index++) {
-//		LPC_GPIOINT->IO0IntClr = 1 << outputPins[output_pin_index];
-//    }
 	
 	bool interruptPresent = false;
 	for (int output_pin_index = 0; output_pin_index < outputSize; output_pin_index++) {
@@ -125,24 +104,7 @@ void checkKeypadInterrupt() {
 	}
 	
 	keypadDeadTime = 120;
-	
-	printChar(interruptPresent ? 'T' : 'F');
-	print(": passed keypad dead time check\r\n");
-	
-    for (volatile int i = 2000; i > 0; i--);
-
 	readLengthFromKeypad = interruptPresent;
-	
-    for (volatile int i = 2000; i > 0; i--);
-
-    // disable interrupts from output pins unt
-//	print("disabling interrupt\r\n");
-//    if (readLengthFromKeypad) {
-//        for (int output_pin_index = 0; output_pin_index < outputSize; output_pin_index++) {
-//            LPC_GPIOINT->IO0IntEnF &= ~(1 << outputPins[output_pin_index]);
-//        }
-//    }
-//	print("disabled interrupt\r\n");
 	
     for (volatile int i = 2000; i > 0; i--);
 	

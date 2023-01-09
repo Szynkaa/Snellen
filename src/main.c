@@ -12,26 +12,8 @@
 #include "util.h"
 
 
-//void HardFault_Handler() {
-//	print("HARD FAULT\r\n");
-//}
-
-//void UsageFault_Handler() {
-//	print("USAGE FAULT\r\n");
-//}
-
-//void BusFault_Handler() {
-//	print("BUS FAULT\r\n");
-//}
-
-//void MemManage_Handler() {
-//	print("MEM MANAGE\r\n");
-//}
-
 void EINT3_IRQHandler() {
 	LPC_SC->EXTINT = 1 << 3;
-	
-	print("HERE\r\n");
 	checkKeypadInterrupt();
 }
 
