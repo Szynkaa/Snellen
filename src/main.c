@@ -12,9 +12,20 @@
 #include "util.h"
 
 
+volatile int key0DeadTime = 0;
+volatile int key1DeadTime = 0;
+
 void EINT3_IRQHandler() {
 	LPC_SC->EXTINT = 1 << 3; // clear external interrupt flag
 	checkKeypadInterrupt();
+}
+
+void key0Handler() {
+    printChar('0');
+}
+
+void key1Handler() {
+    printChar('1');
 }
 
 int main() {
@@ -22,7 +33,10 @@ int main() {
 	initializeConsole();
 	initializeEPaper();
 	initializeKeypad();
+    
 	initializeKeys();
+    key0Callback = key0Handler;
+    key1Callback = key1Handler;
 
 	// Main logic
 	print("Ping\r\n");
