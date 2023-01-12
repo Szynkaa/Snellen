@@ -36,13 +36,6 @@ int main() {
     key0Callback = key0Handler;
     key1Callback = key1Handler;
 
-    // Timer 0
-    LPC_TIM0->PR = SystemCoreClock / 4 / 1000000; // microseconds
-    LPC_TIM0->MR0 = 100; // 100us
-    LPC_TIM0->MCR = 0b101;
-
-    NVIC_EnableIRQ(TIMER0_IRQn);
-
     // Main logic
     print("Ping\r\n");
 

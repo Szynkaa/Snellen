@@ -6,91 +6,105 @@
 #include "epaper.h"
 #include "console.h"
 
+// "private" functions declarations
+void printErrorAndClearErrorCodeBuffer();
+void commandHistoryEnqueue(const EPaperCommand command);
+EPaperCommand commandHistoryDequeue();
+void sendNewEPaperRefreshIfPending();
+bool updateRefreshStatus();
+
 #define COMMAND_HISTORY_SIZE 128
 
-EPaperCommand commandHistory[COMMAND_HISTORY_SIZE];
-int commandHistoryStart = 0;
-int commandHistoryEnd = 0;
+volatile EPaperCommand commandHistory[COMMAND_HISTORY_SIZE];
+volatile int commandHistoryStart = 0;
+volatile int commandHistoryEnd = 0;
 
-char errorCodeBuffer[4] = {};
-int errorCodeLength = 0;
+volatile char errorCodeBuffer[4] = {};
+volatile int errorCodeLength = 0;
 
-void printError();
+volatile enum EPaperRefreshStatus {
+    NO_REFRESH_IN_QUEUE = 0,
+    REFRESH_IN_QUEUE = 1,
+    REFRESH_PENDING = 2
+} ePaperRefreshStatus = NO_REFRESH_IN_QUEUE;
 
-void commandHistoryEnqueue(EPaperCommand command) {
+void commandHistoryEnqueue(const EPaperCommand command) {
     commandHistoryEnd = (commandHistoryEnd + 1) % COMMAND_HISTORY_SIZE;
     commandHistory[commandHistoryEnd] = command;
 }
 
 EPaperCommand commandHistoryDequeue() {
-    EPaperCommand command = commandHistory[commandHistoryStart];
+    const EPaperCommand command = commandHistory[commandHistoryStart];
+    if (command == EPAPER_REFRESH) {
+        sendNewEPaperRefreshIfPending();
+    }
     commandHistoryStart = (commandHistoryStart + 1) % COMMAND_HISTORY_SIZE;
     return command;
 }
 
-// redirect everything coming in from epaper to console
+void sendNewEPaperRefreshIfPending() {
+    if (ePaperRefreshStatus == REFRESH_IN_QUEUE) {
+        ePaperRefreshStatus = NO_REFRESH_IN_QUEUE;
+    }
+    else if (ePaperRefreshStatus == REFRESH_PENDING) {
+        ePaperRefreshStatus = NO_REFRESH_IN_QUEUE;
+        ePaperSendCommand(EPAPER_REFRESH, NULL, 0);
+    }
+}
+
+bool updateRefreshStatus() {
+    return ePaperRefreshStatus == REFRESH_PENDING || ePaperRefreshStatus++;
+}
+
+// redirect epaper feedback to console with respective EPaperCommand code
 void UART2_IRQHandler() {
-    char received = LPC_UART2->RBR;
+    while (LPC_UART2->LSR & 1) {
+        const char received = LPC_UART2->RBR;
 
-    char buffer[32];
-    switch (received) {
-    case 'O':
-        LPC_TIM0->TCR = 0;
-        if (errorCodeLength > 0) {
-            printError();
+        if (received == 'k') {
+            char buffer[32];
+            sprintf(buffer, "%02x: OK\r\n", commandHistoryDequeue());
+            print(buffer);
+            continue;
         }
 
-        sprintf(buffer, "%02x: OK\r\n", commandHistoryDequeue());
-        print(buffer);
-        break;
-
-    case 'E':
-        LPC_TIM0->TCR = 0;
-        if (errorCodeLength > 0) {
-            printError();
+        if (received == 'O' || received == 'E') {
+            LPC_TIM0->TCR = 0b10;
+            if (errorCodeLength > 0) {
+                printErrorAndClearErrorCodeBuffer();
+            }
+            continue;
         }
-        break;
 
-    case '0':
-    case '1':
-    case '2':
-    case '3':
-    case '4':
-    case '5':
-    case '6':
-    case '7':
-    case '8':
-    case '9':
-        errorCodeBuffer[errorCodeLength] = received;
-        errorCodeLength++;
+        if (received >= '0' && received <= '9') {
+            errorCodeBuffer[errorCodeLength] = received;
+            errorCodeLength++;
 
-        // reset and start timer 0
-        LPC_TIM0->TCR = 0b11;
-        LPC_TIM0->TCR = 0b1;
+            // reset and start timer 0
+            LPC_TIM0->TCR = 0b11;
+            LPC_TIM0->TCR = 0b01;
 
-        break;
-
-    default:
-        break;
+            continue;
+        }
     }
 }
 
 void TIMER0_IRQHandler() {
     LPC_TIM0->IR = 1;
-
-    printError();
+    printErrorAndClearErrorCodeBuffer();
 }
 
-void printError() {
+void printErrorAndClearErrorCodeBuffer() {
     char buffer[32];
     sprintf(buffer, "%02x: ERROR %s\r\n", commandHistoryDequeue(), errorCodeBuffer);
     print(buffer);
 
     errorCodeLength = 0;
-    memset(errorCodeBuffer, 0, sizeof(errorCodeBuffer));
+    for (int i = 0; i < sizeof(errorCodeBuffer); ++i) errorCodeBuffer[i] = 0;
 }
 
 void initializeEPaper() {
+    // setup UART2 as communication with epaper
     LPC_SC->PCONP |= 1 << 24;
 
     PIN_Configure(0, 10, 0b01, 0, 0);
@@ -105,6 +119,13 @@ void initializeEPaper() {
 
     LPC_UART2->IER = 0b1; // enable interrupts
     NVIC_EnableIRQ(UART2_IRQn);
+
+    // setup Timer 0 as timeout for epaper feedback
+    LPC_TIM0->PR = SystemCoreClock / 4 / 1000000; // 1 microsecond
+    LPC_TIM0->MR0 = 100; // 100us
+    LPC_TIM0->MCR = 0b101;
+
+    NVIC_EnableIRQ(TIMER0_IRQn);
 }
 
 void ePaperSendByte(const uint8_t byte) {
@@ -113,6 +134,10 @@ void ePaperSendByte(const uint8_t byte) {
 }
 
 void ePaperSendCommand(const EPaperCommand command, const void* data, const uint16_t dataLength) {
+    if (command == EPAPER_REFRESH && updateRefreshStatus()) {
+        return;
+    }
+
     commandHistoryEnqueue(command);
 
     const uint8_t* dataBytes = data;
