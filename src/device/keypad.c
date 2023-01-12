@@ -46,14 +46,10 @@ void initializeKeypad() {
 }
 
 int readKeypad() {
-    for (volatile int i = 2000; i > 0; i--);
-
     // set all input pins high
     for (int input_pin_index = 0; input_pin_index < inputSize; input_pin_index++) {
         inputPorts[input_pin_index]->FIOSET = 1 << inputPins[input_pin_index];
     }
-    
-    for (volatile int i = 2000; i > 0; i--);
     
     int result = 0;
     for (int input_pin_index = 0; input_pin_index < inputSize; input_pin_index++) {
@@ -69,7 +65,7 @@ int readKeypad() {
         // set the input put high such that all input pins are high again
         inputPorts[input_pin_index]->FIOSET = 1 << inputPins[input_pin_index];
 
-        for (volatile int i = 2000; i > 0; i--);
+        for (volatile int i = 200; i > 0; i--);
     }
     
     clearKeypadPendingRead();

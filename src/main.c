@@ -38,45 +38,79 @@ int main() {
     key0Callback = key0Handler;
     key1Callback = key1Handler;
 
+	// Timer 0
+	LPC_TIM0->PR = SystemCoreClock / 4 / 1000000; // microseconds
+	LPC_TIM0->MR0 = 100; // 100us
+	LPC_TIM0->MCR = 0b101;
+	
+	NVIC_EnableIRQ(TIMER0_IRQn);
+	
 	// Main logic
 	print("Ping\r\n");
 
-	//	ePaperSendCommand(EPAPER_HANDSHAKE, NULL, 0);
-	//	ePaperSendCommand(EPAPER_GET_BAUD_RATE, NULL, 0);
-
-	//	const unsigned char colorData[] = {0x00, 0x03};
-	//	ePaperSendCommand(EPAPER_SET_COLORS, colorData, sizeof(colorData));
-	//	
-	//	const unsigned char fontSize[] = {0x03};
-	//	ePaperSendCommand(EPAPER_SET_FONT_SIZE, fontSize, sizeof(fontSize));
-	//	
-	//	ePaperSendCommand(EPAPER_CLEAR_SCREEN, NULL, 0);
-	//	
-	//	for (volatile int i = 100000000; i > 0; i--);
-	//	
-	//	const char text[] = "\x00\x20\x00\x20\xC4\xE3\xBA\xC3\x57\x6F\x72\x6C\x64";
-	//	ePaperSendCommand(EPAPER_DISPLAY_TEXT, text, sizeof(text));
-	//	
-	//	const uint16_t linePoints[] = {swapEndianness(0), swapEndianness(0), swapEndianness(256), swapEndianness(256)};
-	//	ePaperSendCommand(EPAPER_DRAW_LINE, linePoints, sizeof(linePoints));
-	//	
-	//	const uint8_t storageAreaId = 1;
-	//	ePaperSendCommand(EPAPER_SET_STORAGE_AREA, &storageAreaId, 1);
-	//	
-	//	const uint8_t imageData[] = "\0\0\0\0B_600.bmp";
-	//	ePaperSendCommand(EPAPER_DISPLAY_IMAGE, imageData, sizeof(imageData));
-	//	
-	//	ePaperSendCommand(EPAPER_REFRESH, NULL, 0);
+	const unsigned char colorData[] = {0x00, 0x03};
+	ePaperSendCommand(EPAPER_SET_COLORS, colorData, sizeof(colorData));
+	
+	const unsigned char fontSize[] = {0x03};
+	ePaperSendCommand(EPAPER_SET_FONT_SIZE, fontSize, sizeof(fontSize));
+	
+	ePaperSendCommand(EPAPER_REFRESH, NULL, 0);
+	
+	const uint8_t storageAreaId = 1;
+	ePaperSendCommand(EPAPER_SET_STORAGE_AREA, &storageAreaId, 1);
 	
 	NVIC_EnableIRQ(EINT3_IRQn);
 
+	char input[128];
+	int inputLength = 0;
 	while (true) {
+		
 		if (keypadPendingRead) {
-			int result = readKeypad();
+			int result = keypadCodeToDigit(readKeypad());
 
+			if (result == -3) {
+				// ignore
+				continue;
+			}
+			else if (result == -1) {
+				// remove character
+				if (inputLength > 0) {
+					inputLength--;
+					input[inputLength] = '\0';
+				}
+			}
+			else if (result == -2) {
+				// accept
+				break;
+			}
+			else {
+				// add character
+				input[inputLength] = '0' + result;
+				input[inputLength + 1] = '\0';
+				inputLength++;
+			}
+			print(input);
+			print("\r\n");
+			
+			ePaperSendCommand(EPAPER_CLEAR_SCREEN, NULL, 0);
+			char textData[132] = "\x00\x20\x00\x20";
+			strcpy(textData + 4, input);
+			ePaperSendCommand(EPAPER_DISPLAY_TEXT, textData, strlen(input) + 5);
+			
 			char buffer[32];
-			sprintf(buffer, "%04x (%d)\r\n", result, keypadCodeToDigit(result));
+			sprintf(buffer, "strlen: %d\r\n", strlen(input) + 5);
 			print(buffer);
+			
+			ePaperSendCommand(EPAPER_REFRESH, NULL, 0);
 		}
+	}
+	
+	const uint8_t imageData[] = "\0\0\0\0A_400.bmp";
+	ePaperSendCommand(EPAPER_DISPLAY_IMAGE, imageData, sizeof(imageData));
+	
+	ePaperSendCommand(EPAPER_REFRESH, NULL, 0);
+	
+	while (true) {
+		
 	}
 }

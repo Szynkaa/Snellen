@@ -7,14 +7,14 @@ inline uint16_t swapEndianness(uint16_t x) {
 
 int keypadCodeToDigit(uint16_t code) {
     if (code == 0) {
-        return -2;
+        return -3;
     }
     
     const int mapping[16] = {
-        -1, -1, -1, 0,
-        -1, 9, 8, 7,
-        -1, 6, 5, 4,
-        -1, 3, 2, 1,
+        -1, -3, -3, 0,
+        -2, 9, 8, 7,
+        -3, 6, 5, 4,
+        -3, 3, 2, 1,
     };
     
     int index = 0;
