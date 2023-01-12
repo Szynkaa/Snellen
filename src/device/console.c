@@ -2,9 +2,7 @@
 
 #include "LPC17xx.h"
 #include "PIN_LPC17xx.h"
-
 #include "console.h"
-
 
 void initializeConsole() {
     PIN_Configure(0, 2, 0b01, 0, 0);

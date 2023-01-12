@@ -1,7 +1,5 @@
 #include "systick.h"
-
 #include "LPC17xx.h"
-
 
 extern volatile int eint0DeadTime;
 extern volatile int eint1DeadTime;
@@ -18,15 +16,15 @@ void SysTick_Handler() {
     if (eint0DeadTime > 0) {
         --eint0DeadTime;
     }
-    
+
     if (eint1DeadTime > 0) {
         --eint1DeadTime;
     }
-    
+
     if (keypadDeadTime > 0) {
         --keypadDeadTime;
     }
-    
+
     sysTickTimer++;
 }
 

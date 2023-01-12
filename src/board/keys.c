@@ -5,7 +5,6 @@
 #include "PIN_LPC17xx.h"
 #include "device/console.h"
 
-
 volatile int eint0DeadTime = 0;
 volatile int eint1DeadTime = 0;
 
@@ -22,7 +21,7 @@ void EINT0_IRQHandler() {
     if (key0Callback) {
         key0Callback();
     }
-    
+
     eint0DeadTime = 200;
 }
 
