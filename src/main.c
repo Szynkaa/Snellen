@@ -8,6 +8,7 @@
 #include "device/console.h"
 #include "device/epaper.h"
 #include "device/keypad.h"
+#include "snellen.h"
 #include "util.h"
 
 volatile int key0DeadTime = 0;
@@ -96,10 +97,7 @@ int main() {
         }
     }
 
-    const uint8_t imageData[] = "\0\0\0\0A_400.bmp";
-    ePaperSendCommand(EPAPER_DISPLAY_IMAGE, imageData, sizeof(imageData));
-
-    ePaperSendCommand(EPAPER_REFRESH, NULL, 0);
+    displaySnellenLetter('A', 400);
 
     while (true) {
 

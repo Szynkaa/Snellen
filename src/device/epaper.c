@@ -7,6 +7,7 @@
 #include "console.h"
 
 // "private" functions declarations
+void ePaperSendByte(const uint8_t byte);
 void printErrorAndClearErrorCodeBuffer();
 void commandHistoryEnqueue(const EPaperCommand command);
 EPaperCommand commandHistoryDequeue();
@@ -61,7 +62,7 @@ void UART2_IRQHandler() {
     while (LPC_UART2->LSR & 1) {
         const char received = LPC_UART2->RBR;
 
-        if (received == 'k') {
+        if (received == 'K') {
             char buffer[32];
             sprintf(buffer, "%02x: OK\r\n", commandHistoryDequeue());
             print(buffer);

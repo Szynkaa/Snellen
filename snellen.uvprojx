@@ -398,6 +398,16 @@
               <FileType>5</FileType>
               <FilePath>.\src\util.h</FilePath>
             </File>
+            <File>
+              <FileName>snellen.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\src\snellen.c</FilePath>
+            </File>
+            <File>
+              <FileName>snellen.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\src\snellen.h</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

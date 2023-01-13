@@ -8,8 +8,8 @@
 volatile int eint0DeadTime = 0;
 volatile int eint1DeadTime = 0;
 
-void (*key0Callback)();
-void (*key1Callback)();
+void (*key0Callback)() = NULL;
+void (*key1Callback)() = NULL;
 
 void EINT0_IRQHandler() {
     LPC_SC->EXTINT = 1 << 0;
@@ -44,13 +44,11 @@ void initializeKeys() {
     PIN_Configure(2, 10, 0b01, 0, 0);
 
     LPC_SC->EXTMODE = (LPC_SC->EXTMODE & 0b1111) | 1 << 0;
-    key0Callback = NULL;
     NVIC_EnableIRQ(EINT0_IRQn);
 
     // Key 1
     PIN_Configure(2, 11, 0b01, 0, 0);
 
     LPC_SC->EXTMODE = (LPC_SC->EXTMODE & 0b1111) | 1 << 1;
-    key1Callback = NULL;
     NVIC_EnableIRQ(EINT1_IRQn);
 }
