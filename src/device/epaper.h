@@ -26,5 +26,6 @@ typedef enum {
 
 void initializeEPaper();
 void ePaperSendCommand(const EPaperCommand command, const void* data, const uint16_t dataLength);
+void ePaperDisplayImage(unsigned short x, unsigned short y, const char* filename);
 
 #endif // _EPAPER_

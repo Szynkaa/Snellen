@@ -14,11 +14,11 @@ int displaySnellenLetter(const char letter, const unsigned int size) {
     const int xpos = (X_SIZE - size) / 2;
     const int ypos = (Y_SIZE - size) / 2;
 
-    char image[32];
-    const int imageLength = sprintf(image, "%02x%02x%c_%d.bmp", xpos, ypos, letter, size);
+    char imageFilename[32];
+    const int imageFilenameLength = sprintf(imageFilename, "%c_%d.bmp", letter, size);
 
     ePaperSendCommand(EPAPER_CLEAR_SCREEN, NULL, 0);
-    ePaperSendCommand(EPAPER_DISPLAY_IMAGE, image, imageLength + 1);
+    ePaperDisplayImage(xpos, ypos, imageFilename);
     ePaperSendCommand(EPAPER_REFRESH, NULL, 0);
 
     return 0;

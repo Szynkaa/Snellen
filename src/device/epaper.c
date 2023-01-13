@@ -160,3 +160,16 @@ void ePaperSendCommand(const EPaperCommand command, const void* data, const uint
 
     ePaperSendByte(parity);
 }
+
+void ePaperDisplayImage(unsigned short x, unsigned short y, const char* filename) {
+    int filenameLength = strlen(filename);
+    int dataLength = 2 + 2 + filenameLength + 1; // x, y, filename, null terminator
+
+    char data[dataLength];
+    memcpy(data, &x, sizeof(x));
+    memcpy(data + 2, &y, sizeof(y));
+    memcpy(data + 4, filename, filenameLength);
+    data[dataLength - 1] = '\0';
+
+    ePaperSendCommand(EPAPER_DISPLAY_IMAGE, data, dataLength);
+}
