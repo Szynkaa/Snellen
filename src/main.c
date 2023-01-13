@@ -1,6 +1,6 @@
 #include <stdbool.h>
-#include <string.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "LPC17xx.h"
 #include "board/systick.h"
@@ -97,9 +97,37 @@ int main() {
         }
     }
 
-    displaySnellenLetter('A', 400);
+    char printBuffer[32];
+    SnellenTestState testState = snellenCreateTestState();
 
     while (true) {
+        SnellenShownLetter shownLetter = snellenGetNextLetter(&testState);
+        if (shownLetter.character == '\0') {
+            break;
+        }
 
+        sprintf(printBuffer, "Showing character %c with size index %d\r\n", shownLetter.character, shownLetter.sizeIndex);
+        print(printBuffer);
+
+        snellenDisplayLetter(shownLetter);
+
+        bool isCorrect;
+        while (true) {
+            while (!keypadPendingRead);
+            int pressedKey = keypadCodeToDigit(readKeypad());
+            if (pressedKey == -1) { // C
+                isCorrect = true;
+                break;
+            }
+            else if (pressedKey == -2) { // D
+                isCorrect = false;
+                break;
+            }
+        }
+
+        sprintf(printBuffer, "Letter marked as %s\r\n", isCorrect ? "correct" : "wrong");
+        print(printBuffer);
+
+        snellenUpdateState(&testState, shownLetter, isCorrect);
     }
 }
