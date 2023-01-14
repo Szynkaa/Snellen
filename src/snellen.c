@@ -1,7 +1,8 @@
 #include <stdio.h>
 
-#include "snellen.h"
 #include "device/epaper.h"
+#include "random.h"
+#include "snellen.h"
 
 #define X_SIZE 800
 #define Y_SIZE 600
@@ -79,8 +80,7 @@ SnellenShownLetter snellenGetNextLetter(const SnellenTestState* testState) {
         return nullShownLetter;
     }
     else {
-        // TODO: randomize letter choice
-        SnellenShownLetter shownLetter = { 'A' + testState->shownLettersBySize[sizeIndex] , sizeIndex };
+        SnellenShownLetter shownLetter = { 'A' + (randomNext() % 26), sizeIndex };
         return shownLetter;
     }
 }

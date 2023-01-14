@@ -8,6 +8,7 @@
 #include "device/console.h"
 #include "device/epaper.h"
 #include "device/keypad.h"
+#include "random.h"
 #include "snellen.h"
 #include "util.h"
 
@@ -32,6 +33,7 @@ int main() {
     initializeConsole();
     initializeEPaper();
     initializeKeypad();
+    randomSetSeed(4079839681u);
 
     initializeKeys();
     key0Callback = key0Handler;
@@ -56,7 +58,6 @@ int main() {
     char input[128];
     int inputLength = 0;
     while (true) {
-
         if (keypadPendingRead) {
             int result = keypadCodeToDigit(readKeypad());
 
@@ -95,6 +96,7 @@ int main() {
 
             ePaperSendCommand(EPAPER_REFRESH, NULL, 0);
         }
+        randomNext(); // cycle prng constantly
     }
 
     char printBuffer[64];
@@ -113,7 +115,9 @@ int main() {
 
         bool isCorrect;
         while (true) {
-            while (!keypadPendingRead);
+            while (!keypadPendingRead) {
+                randomNext(); // cycle prng constantly
+            }
             int pressedKey = keypadCodeToDigit(readKeypad());
             if (pressedKey == -1) { // C
                 isCorrect = true;

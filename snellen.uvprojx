@@ -408,6 +408,16 @@
               <FileType>5</FileType>
               <FilePath>.\src\snellen.h</FilePath>
             </File>
+            <File>
+              <FileName>random.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\src\random.c</FilePath>
+            </File>
+            <File>
+              <FileName>random.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\src\random.h</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
