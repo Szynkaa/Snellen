@@ -1,7 +1,9 @@
 #ifndef _SNELLEN_
 #define _SNELLEN_
 
-#define SIZES_COUNT 3
+#include <stdbool.h>
+
+#define SIZES_COUNT 8
 
 // If currentSizeLowerBoundIndex and currentSizeUpperBoundIndex differ by more than 1,
 // the state is in the binary search phase, in which an initial size index is searched
@@ -9,6 +11,7 @@
 // for a given size letters are shown until LETTERS_SHOWN_PER_SIZE letters have been
 // reached.
 typedef struct {
+    unsigned int distanceInCm;
     unsigned char currentSizeLowerBoundIndex;
     unsigned char currentSizeUpperBoundIndex;
     unsigned char shownLettersBySize[SIZES_COUNT];
@@ -20,8 +23,8 @@ typedef struct {
     short sizeIndex;
 } SnellenShownLetter;
 
-SnellenTestState snellenCreateTestState();
-int snellenDisplayLetter(SnellenShownLetter letter);
+SnellenTestState snellenCreateTestState(int distanceInCm);
+int snellenDisplayLetter(const SnellenTestState* testState, SnellenShownLetter letter);
 SnellenShownLetter snellenGetNextLetter(const SnellenTestState* testState);
 void snellenUpdateState(SnellenTestState* testState, const SnellenShownLetter letter, const bool correct);
 

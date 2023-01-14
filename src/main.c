@@ -97,8 +97,8 @@ int main() {
         }
     }
 
-    char printBuffer[32];
-    SnellenTestState testState = snellenCreateTestState();
+    char printBuffer[64];
+    SnellenTestState testState = snellenCreateTestState(600); // TODO: use input from earlier
 
     while (true) {
         SnellenShownLetter shownLetter = snellenGetNextLetter(&testState);
@@ -109,7 +109,7 @@ int main() {
         sprintf(printBuffer, "Showing character %c with size index %d\r\n", shownLetter.character, shownLetter.sizeIndex);
         print(printBuffer);
 
-        snellenDisplayLetter(shownLetter);
+        snellenDisplayLetter(&testState, shownLetter);
 
         bool isCorrect;
         while (true) {

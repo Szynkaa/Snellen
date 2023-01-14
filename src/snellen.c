@@ -1,4 +1,3 @@
-#include <stdbool.h>
 #include <stdio.h>
 
 #include "snellen.h"
@@ -7,21 +6,29 @@
 #define X_SIZE 800
 #define Y_SIZE 600
 
+// multiply distance in centimeters by this value to get letter size in pixels for a 6/6 test
+#define LETTER_SIZE_TO_DISTANCE_RATIO 0.13222193633f
+
 #define LETTERS_SHOWN_PER_SIZE 5
 #define CORRECT_LETTERS_PER_SIZE_TO_PASS 3
 
-const unsigned short sizes[SIZES_COUNT] = { 600, 500, 400 };
+const float sizeMultipliers[SIZES_COUNT] = { 9, 6, 4, 3, 2, 1, 0.75, 0.5 };
 
-int snellenDisplayLetter(SnellenShownLetter letter) {
+int snellenDisplayLetter(const SnellenTestState* testState, SnellenShownLetter letter) {
     if (letter.character < 'A' || letter.character > 'Z') {
         return 1;
     }
 
-    const int xpos = (X_SIZE - sizes[letter.sizeIndex]) / 2;
-    const int ypos = (Y_SIZE - sizes[letter.sizeIndex]) / 2;
+    // TODO: adjust letter size to one for which there are images
+    const int letterSize = testState->distanceInCm
+        * sizeMultipliers[letter.sizeIndex]
+        * LETTER_SIZE_TO_DISTANCE_RATIO
+        + 0.5; // + 0.5 to round to nearest
+    const int xpos = (X_SIZE - letterSize) / 2;
+    const int ypos = (Y_SIZE - letterSize) / 2;
 
     char imageFilename[32];
-    const int imageFilenameLength = sprintf(imageFilename, "%c_%d.bmp", letter.character, sizes[letter.sizeIndex]);
+    const int imageFilenameLength = sprintf(imageFilename, "%c_%d.bmp", letter.character, letterSize);
 
     ePaperSendCommand(EPAPER_CLEAR_SCREEN, NULL, 0);
     ePaperDisplayImage(xpos, ypos, imageFilename);
@@ -30,8 +37,9 @@ int snellenDisplayLetter(SnellenShownLetter letter) {
     return 0;
 }
 
-SnellenTestState snellenCreateTestState() {
+SnellenTestState snellenCreateTestState(int distanceInCm) {
     SnellenTestState testState = {};
+    testState.distanceInCm = distanceInCm;
     testState.currentSizeLowerBoundIndex = 0;
     testState.currentSizeUpperBoundIndex = SIZES_COUNT;
     return testState;
@@ -71,6 +79,7 @@ SnellenShownLetter snellenGetNextLetter(const SnellenTestState* testState) {
         return nullShownLetter;
     }
     else {
+        // TODO: randomize letter choice
         SnellenShownLetter shownLetter = { 'A' + testState->shownLettersBySize[sizeIndex] , sizeIndex };
         return shownLetter;
     }
