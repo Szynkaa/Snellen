@@ -24,7 +24,7 @@ typedef struct {
 } SnellenShownLetter;
 
 SnellenTestState snellenCreateTestState(int distanceInCm);
-int snellenDisplayLetter(const SnellenTestState* testState, SnellenShownLetter letter);
+void snellenDisplayLetter(const SnellenTestState* testState, SnellenShownLetter letter);
 SnellenShownLetter snellenGetNextLetter(const SnellenTestState* testState);
 void snellenUpdateState(SnellenTestState* testState, const SnellenShownLetter letter, const bool correct);
 

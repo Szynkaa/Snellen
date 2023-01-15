@@ -39,8 +39,10 @@ int main() {
     key0Callback = key0Handler;
     key1Callback = key1Handler;
 
+    NVIC_EnableIRQ(EINT3_IRQn);
+
     // Main logic
-    print("Ping\r\n");
+    print("**program initialized**\r\n");
 
     const unsigned char colorData[] = { 0x00, 0x03 };
     ePaperSendCommand(EPAPER_SET_COLORS, colorData, sizeof(colorData));
@@ -53,26 +55,24 @@ int main() {
     const uint8_t storageAreaId = 1;
     ePaperSendCommand(EPAPER_SET_STORAGE_AREA, &storageAreaId, 1);
 
-    NVIC_EnableIRQ(EINT3_IRQn);
-
     char input[128];
     int inputLength = 0;
     while (true) {
         if (keypadPendingRead) {
-            int result = keypadCodeToDigit(readKeypad());
+            const int result = keypadCodeToDigit(readKeypad());
 
-            if (result == -3) {
+            if (result == CODE_IGNORE) {
                 // ignore
                 continue;
             }
-            else if (result == -1) {
+            else if (result == CODE_BACKSPACE) {
                 // remove character
                 if (inputLength > 0) {
                     inputLength--;
                     input[inputLength] = '\0';
                 }
             }
-            else if (result == -2) {
+            else if (result == CODE_ENTER) {
                 // accept
                 break;
             }

@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-typedef enum {
+typedef enum EPaperCommand {
 	EPAPER_HANDSHAKE = 0x00,
 	EPAPER_SET_BAUD_RATE = 0x01,
 	EPAPER_GET_BAUD_RATE = 0x02,

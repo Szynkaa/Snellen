@@ -15,11 +15,7 @@
 
 const float sizeMultipliers[SIZES_COUNT] = { 9, 6, 4, 3, 2, 1, 0.75, 0.5 };
 
-int snellenDisplayLetter(const SnellenTestState* testState, SnellenShownLetter letter) {
-    if (letter.character < 'A' || letter.character > 'Z') {
-        return 1;
-    }
-
+void snellenDisplayLetter(const SnellenTestState* testState, SnellenShownLetter letter) {
     // TODO: adjust letter size to one for which there are images
     const int letterSize = testState->distanceInCm
         * sizeMultipliers[letter.sizeIndex]
@@ -34,8 +30,6 @@ int snellenDisplayLetter(const SnellenTestState* testState, SnellenShownLetter l
     ePaperSendCommand(EPAPER_CLEAR_SCREEN, NULL, 0);
     ePaperDisplayImage(xpos, ypos, imageFilename);
     ePaperSendCommand(EPAPER_REFRESH, NULL, 0);
-
-    return 0;
 }
 
 SnellenTestState snellenCreateTestState(int distanceInCm) {

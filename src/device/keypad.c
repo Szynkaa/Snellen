@@ -9,11 +9,11 @@ volatile bool keypadPendingRead = false;
 
 volatile int keypadDeadTime = 0;
 
-static const int inputSize = 4;
-static volatile LPC_GPIO_TypeDef* const inputPorts[inputSize] = { LPC_GPIO0, LPC_GPIO0, LPC_GPIO1, LPC_GPIO0 };
-static const uint8_t inputPins[inputSize] = { 8, 9, 31, 6 };
+#define INPUT_SIZE 4
+static volatile LPC_GPIO_TypeDef* const inputPorts[INPUT_SIZE] = { LPC_GPIO0, LPC_GPIO0, LPC_GPIO1, LPC_GPIO0 };
+static const uint8_t inputPins[INPUT_SIZE] = { 8, 9, 31, 6 };
 
-static const int outputSize = 4;
+#define OUTPUT_SIZE 4
 static volatile LPC_GPIO_TypeDef* const outputPort = LPC_GPIO0;
 static const int outputPins[4] = { 17, 18, 15, 16 };
 
@@ -33,29 +33,29 @@ void initializeKeypad() {
     LPC_GPIO0->FIODIR = (1 << 6) | (1 << 8) | (1 << 9);
     LPC_GPIO1->FIODIR = 1 << 31;
 
-    for (int input_pin_index = 0; input_pin_index < inputSize; input_pin_index++) {
+    for (int input_pin_index = 0; input_pin_index < INPUT_SIZE; input_pin_index++) {
         inputPorts[input_pin_index]->FIOCLR = 1 << inputPins[input_pin_index];
     }
 
     // enable interrupts from output pins
-    for (int output_pin_index = 0; output_pin_index < outputSize; output_pin_index++) {
+    for (int output_pin_index = 0; output_pin_index < OUTPUT_SIZE; output_pin_index++) {
         LPC_GPIOINT->IO0IntEnF |= 1 << outputPins[output_pin_index];
     }
 }
 
 int readKeypad() {
     // set all input pins high
-    for (int input_pin_index = 0; input_pin_index < inputSize; input_pin_index++) {
+    for (int input_pin_index = 0; input_pin_index < INPUT_SIZE; input_pin_index++) {
         inputPorts[input_pin_index]->FIOSET = 1 << inputPins[input_pin_index];
     }
 
     int result = 0;
-    for (int input_pin_index = 0; input_pin_index < inputSize; input_pin_index++) {
+    for (int input_pin_index = 0; input_pin_index < INPUT_SIZE; input_pin_index++) {
         // set one input pin low
         inputPorts[input_pin_index]->FIOCLR = 1 << inputPins[input_pin_index];
 
         // read state of all four output pins
-        for (int output_pin_index = 0; output_pin_index < outputSize; output_pin_index++) {
+        for (int output_pin_index = 0; output_pin_index < OUTPUT_SIZE; output_pin_index++) {
             result <<= 1;
             result |= ((outputPort->FIOPIN >> outputPins[output_pin_index]) & 1) ^ 1;
         }
@@ -73,7 +73,7 @@ int readKeypad() {
 
 void clearKeypadPendingRead() {
     // set all input pins low, so that any keypress will cause an interrupt
-    for (int input_pin_index = 0; input_pin_index < inputSize; input_pin_index++) {
+    for (int input_pin_index = 0; input_pin_index < INPUT_SIZE; input_pin_index++) {
         inputPorts[input_pin_index]->FIOCLR = 1 << inputPins[input_pin_index];
     }
 
@@ -86,7 +86,7 @@ void checkKeypadInterrupt() {
 
     // check if any of the keypad output pins generated an interrupt
     bool ignoreInterrupt = true;
-    for (int output_pin_index = 0; output_pin_index < outputSize; output_pin_index++) {
+    for (int output_pin_index = 0; output_pin_index < OUTPUT_SIZE; output_pin_index++) {
         if (state & 1 << outputPins[output_pin_index]) {
             ignoreInterrupt = false;
             break;
@@ -106,7 +106,7 @@ void checkKeypadInterrupt() {
     }
 
     // clear relevant GPIO interrupt flags
-    for (int output_pin_index = 0; output_pin_index < outputSize; output_pin_index++) {
+    for (int output_pin_index = 0; output_pin_index < OUTPUT_SIZE; output_pin_index++) {
         LPC_GPIOINT->IO0IntClr = 1 << outputPins[output_pin_index];
     }
 }
