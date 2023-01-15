@@ -3,29 +3,30 @@
 
 #include <stdbool.h>
 
-#define SIZES_COUNT 8
+#define NUM_OF_TESTS 8
 
 // If currentSizeLowerBoundIndex and currentSizeUpperBoundIndex differ by more than 1,
 // the state is in the binary search phase, in which an initial size index is searched
 // for to start testing from. Otherwise, the state is in the concentrated phase, where
 // for a given size letters are shown until LETTERS_SHOWN_PER_SIZE letters have been
 // reached.
-typedef struct {
-    unsigned int distanceInCm;
-    unsigned char currentSizeLowerBoundIndex;
-    unsigned char currentSizeUpperBoundIndex;
-    unsigned char shownLettersBySize[SIZES_COUNT];
-    unsigned char correctLettersBySize[SIZES_COUNT];
+typedef struct SnellenTestState {
+    uint16_t distanceInCm;
+    uint8_t nOfChecksDone;
+    char lastTwoCharacters[2];
+    uint8_t shownLettersSizeIndexes[NUM_OF_TESTS];
+    bool shownLettersCorrectness[NUM_OF_TESTS];
 } SnellenTestState;
 
-typedef struct {
+typedef struct SnellenLetter {
     char character;
-    short sizeIndex;
-} SnellenShownLetter;
+    uint8_t sizeIndex;
+} SnellenLetter;
 
+uint16_t getDistanceFromUser();
 SnellenTestState snellenCreateTestState(int distanceInCm);
-void snellenDisplayLetter(const SnellenTestState* testState, SnellenShownLetter letter);
-SnellenShownLetter snellenGetNextLetter(const SnellenTestState* testState);
-void snellenUpdateState(SnellenTestState* testState, const SnellenShownLetter letter, const bool correct);
+void snellenDisplayLetter(SnellenLetter letter);
+SnellenLetter snellenGetNextLetter(const SnellenTestState* testState);
+void snellenUpdateState(SnellenTestState* testState, const SnellenLetter letter, const bool correct);
 
 #endif // _SNELLEN_

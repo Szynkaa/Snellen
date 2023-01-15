@@ -24,3 +24,11 @@ int keypadCodeToDigit(uint16_t code) {
 
     return mapping[index];
 }
+
+int max(const int a, const int b) {
+    return a > b ? a : b;
+}
+
+int min(const int a, const int b) {
+    return a > b ? b : a;
+}

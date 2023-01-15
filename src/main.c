@@ -12,20 +12,19 @@
 #include "snellen.h"
 #include "util.h"
 
-volatile int key0DeadTime = 0;
-volatile int key1DeadTime = 0;
-
 void EINT3_IRQHandler() {
     LPC_SC->EXTINT = 1 << 3; // clear external interrupt flag
     checkKeypadInterrupt();
 }
 
+volatile int letterGuessedCorrectly;
+
 void key0Handler() {
-    printChar('0');
+    letterGuessedCorrectly = -1;
 }
 
 void key1Handler() {
-    printChar('1');
+    letterGuessedCorrectly = 1;
 }
 
 int main() {
@@ -55,83 +54,31 @@ int main() {
     const uint8_t storageAreaId = 1;
     ePaperSendCommand(EPAPER_SET_STORAGE_AREA, &storageAreaId, 1);
 
-    char input[128];
-    int inputLength = 0;
-    while (true) {
-        if (keypadPendingRead) {
-            const int result = keypadCodeToDigit(readKeypad());
-
-            if (result == CODE_IGNORE) {
-                // ignore
-                continue;
-            }
-            else if (result == CODE_BACKSPACE) {
-                // remove character
-                if (inputLength > 0) {
-                    inputLength--;
-                    input[inputLength] = '\0';
-                }
-            }
-            else if (result == CODE_ENTER) {
-                // accept
-                break;
-            }
-            else {
-                // add character
-                input[inputLength] = '0' + result;
-                input[inputLength + 1] = '\0';
-                inputLength++;
-            }
-            print(input);
-            print("\r\n");
-
-            ePaperSendCommand(EPAPER_CLEAR_SCREEN, NULL, 0);
-            char textData[132] = "\x00\x20\x00\x20";
-            strcpy(textData + 4, input);
-            ePaperSendCommand(EPAPER_DISPLAY_TEXT, textData, strlen(input) + 5);
-
-            char buffer[32];
-            sprintf(buffer, "strlen: %d\r\n", strlen(input) + 5);
-            print(buffer);
-
-            ePaperSendCommand(EPAPER_REFRESH, NULL, 0);
-        }
-        randomNext(); // cycle prng constantly
-    }
+    const uint16_t distance = getDistanceFromUser();
+    SnellenTestState testState = snellenCreateTestState(distance);
 
     char printBuffer[64];
-    SnellenTestState testState = snellenCreateTestState(600); // TODO: use input from earlier
-
     while (true) {
-        SnellenShownLetter shownLetter = snellenGetNextLetter(&testState);
-        if (shownLetter.character == '\0') {
+        if (testState.nOfChecksDone == NUM_OF_TESTS) {
             break;
         }
 
-        sprintf(printBuffer, "Showing character %c with size index %d\r\n", shownLetter.character, shownLetter.sizeIndex);
+        SnellenLetter letter = snellenGetNextLetter(&testState);
+        snellenDisplayLetter(letter);
+        waitSysTick(2);
+
+        sprintf(printBuffer, "Showing character %c with sizeIndex %d\r\n", letter.character, letter.sizeIndex);
         print(printBuffer);
 
-        snellenDisplayLetter(&testState, shownLetter);
-
-        bool isCorrect;
-        while (true) {
-            while (!keypadPendingRead) {
-                randomNext(); // cycle prng constantly
-            }
-            int pressedKey = keypadCodeToDigit(readKeypad());
-            if (pressedKey == -1) { // C
-                isCorrect = true;
-                break;
-            }
-            else if (pressedKey == -2) { // D
-                isCorrect = false;
-                break;
-            }
-        }
+        letterGuessedCorrectly = 0;
+        while (letterGuessedCorrectly == 0);
+        const bool isCorrect = letterGuessedCorrectly > 0;
 
         sprintf(printBuffer, "Letter marked as %s\r\n", isCorrect ? "correct" : "wrong");
         print(printBuffer);
 
-        snellenUpdateState(&testState, shownLetter, isCorrect);
+        snellenUpdateState(&testState, letter, isCorrect);
     }
+
+    // TODO add calculation of result
 }

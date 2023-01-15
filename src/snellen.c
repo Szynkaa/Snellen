@@ -1,6 +1,12 @@
 #include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <math.h>
 
 #include "device/epaper.h"
+#include "device/keypad.h"
+#include "device/console.h"
+#include "util.h"
 #include "random.h"
 #include "snellen.h"
 
@@ -10,93 +16,131 @@
 // multiply distance in centimeters by this value to get letter size in pixels for a 6/6 test
 #define LETTER_SIZE_TO_DISTANCE_RATIO 0.13222193633f
 
-#define LETTERS_SHOWN_PER_SIZE 5
-#define CORRECT_LETTERS_PER_SIZE_TO_PASS 3
+// TODO fill this according to generated letters in ascending order
+const uint16_t avaliableSizes[] = { 10, 20, 30, 40, 50 };
 
-const float sizeMultipliers[SIZES_COUNT] = { 9, 6, 4, 3, 2, 1, 0.75, 0.5 };
+uint16_t getDistanceFromUser() {
+    char input[4];
+    int inputLength = 0;
+    while (true) {
+        if (keypadPendingRead) {
+            const int result = keypadCodeToDigit(readKeypad());
 
-void snellenDisplayLetter(const SnellenTestState* testState, SnellenShownLetter letter) {
-    // TODO: adjust letter size to one for which there are images
-    const int letterSize = testState->distanceInCm
-        * sizeMultipliers[letter.sizeIndex]
-        * LETTER_SIZE_TO_DISTANCE_RATIO
-        + 0.5; // + 0.5 to round to nearest
-    const int xpos = (X_SIZE - letterSize) / 2;
-    const int ypos = (Y_SIZE - letterSize) / 2;
+            // ignore wrong code
+            if (result == CODE_IGNORE) {
+                continue;
+            }
 
-    char imageFilename[32];
-    const int imageFilenameLength = sprintf(imageFilename, "%c_%d.bmp", letter.character, letterSize);
+            // remove character
+            if (result == CODE_BACKSPACE) {
+                if (inputLength > 0) {
+                    inputLength--;
+                    input[inputLength] = '\0';
+                }
+                continue;
+            }
+
+            // accept distance
+            if (result == CODE_ENTER) {
+                break;
+            }
+
+            if (inputLength >= sizeof(input) + 1) {
+                continue;
+            }
+
+            // add character
+            input[inputLength] = '0' + result;
+            input[inputLength + 1] = '\0';
+            inputLength++;
+
+            print(input);
+            print("\r\n");
+
+            // TODO show as meters?
+            char textData[4 + sizeof(input)] = "\x00\x20\x00\x20";
+            strcpy(textData + 4, input);
+            ePaperSendCommand(EPAPER_CLEAR_SCREEN, NULL, 0);
+            ePaperSendCommand(EPAPER_DISPLAY_TEXT, textData, strlen(input) + 5);
+            ePaperSendCommand(EPAPER_REFRESH, NULL, 0);
+
+            char buffer[32];
+            sprintf(buffer, "strlen: %d\r\n", strlen(input) + 5);
+            print(buffer);
+        }
+        randomNext(); // cycle prng constantly
+    }
+    return atoi(input);
+}
+
+void snellenDisplayLetter(SnellenLetter letter) {
+    const uint16_t size = avaliableSizes[letter.sizeIndex];
+    const uint16_t xpos = swapEndianness((X_SIZE - size) / 2);
+    const uint16_t ypos = swapEndianness((Y_SIZE - size) / 2);
+
+    char data[16];
+    memcpy(data, &xpos, sizeof(xpos));
+    memcpy(data + 2, &ypos, sizeof(ypos));
+    const int filenameLength = sprintf(data + 4, "%c_%d.bmp", letter.character, size);
 
     ePaperSendCommand(EPAPER_CLEAR_SCREEN, NULL, 0);
-    ePaperDisplayImage(xpos, ypos, imageFilename);
+    ePaperSendCommand(EPAPER_DISPLAY_IMAGE, data, filenameLength + 5);
     ePaperSendCommand(EPAPER_REFRESH, NULL, 0);
 }
 
 SnellenTestState snellenCreateTestState(int distanceInCm) {
-    SnellenTestState testState = {};
-    testState.distanceInCm = distanceInCm;
-    testState.currentSizeLowerBoundIndex = 0;
-    testState.currentSizeUpperBoundIndex = SIZES_COUNT;
+    SnellenTestState testState = { distanceInCm, 0 };
+    testState.lastTwoCharacters[0] = '\0';
+    testState.lastTwoCharacters[1] = '\0';
     return testState;
 }
 
-SnellenShownLetter snellenGetNextLetter(const SnellenTestState* testState) {
-    int sizeIndex = -1;
-
-    if (testState->currentSizeUpperBoundIndex - testState->currentSizeLowerBoundIndex >= 2) {
-        // binary search phase
-        sizeIndex = (testState->currentSizeLowerBoundIndex + testState->currentSizeUpperBoundIndex) / 2;
+uint8_t findNearestSizeIndex(const uint16_t size) {
+    float diff = 1.0;
+    for (int i = 0; i < sizeof(avaliableSizes); ++i) {
+        const float newDiff = abs(size - avaliableSizes[i]) / (float)size;
+        if (newDiff > diff) return i;
+        diff = newDiff;
     }
-    else {
-        // concentrated phase
-        if (testState->shownLettersBySize[testState->currentSizeLowerBoundIndex] < LETTERS_SHOWN_PER_SIZE) {
-            // continue with the current size
-            sizeIndex = testState->currentSizeLowerBoundIndex;
-        }
-        else {
-            // enough letters shown for current size; change size index
-            sizeIndex = testState->correctLettersBySize[testState->currentSizeLowerBoundIndex] >= CORRECT_LETTERS_PER_SIZE_TO_PASS
-                ? testState->currentSizeLowerBoundIndex + 1 : testState->currentSizeLowerBoundIndex - 1; // previous size if incorrect, next size if correct
-
-            if (sizeIndex < 0 || sizeIndex >= SIZES_COUNT) {
-                // size doesn't exist; no more letters need to be shown in the test
-                sizeIndex = -1;
-            }
-            else if (testState->shownLettersBySize[sizeIndex] >= LETTERS_SHOWN_PER_SIZE) {
-                // new size has already been completed; no more letters need to be shown in the test
-                sizeIndex = -1;
-            }
-        }
-    }
-
-    if (sizeIndex < 0) {
-        SnellenShownLetter nullShownLetter = { '\0', 0 };
-        return nullShownLetter;
-    }
-    else {
-        SnellenShownLetter shownLetter = { 'A' + (randomNext() % 26), sizeIndex };
-        return shownLetter;
-    }
+    return sizeof(avaliableSizes) - 1;
 }
 
-void snellenUpdateState(SnellenTestState* testState, const SnellenShownLetter letter, const bool correct) {
-    if (testState->currentSizeUpperBoundIndex - testState->currentSizeLowerBoundIndex >= 2) {
-        // binary search phase
-        if (correct) {
-            testState->currentSizeLowerBoundIndex = letter.sizeIndex;
-        }
-        else {
-            testState->currentSizeUpperBoundIndex = letter.sizeIndex;
-        }
-    }
-    else {
-        // concentrated phase
-        testState->currentSizeLowerBoundIndex = letter.sizeIndex;
-        testState->currentSizeUpperBoundIndex = letter.sizeIndex + 1;
+uint8_t sizeIndexInRange(uint8_t index) {
+    return min(sizeof(avaliableSizes), max(0, index));
+}
+
+// basic size changing
+SnellenLetter snellenGetNextLetter(const SnellenTestState* testState) {
+    SnellenLetter letter = { 'A' + (randomNext() % 26), 0 };
+    while (letter.character == testState->lastTwoCharacters[0]
+        || letter.character == testState->lastTwoCharacters[1]) {
+        letter.character = 'A' + randomNext() % 26;
     }
 
-    testState->shownLettersBySize[letter.sizeIndex]++;
-    if (correct) {
-        testState->correctLettersBySize[letter.sizeIndex]++;
+    if (testState->nOfChecksDone == 0) {
+        letter.sizeIndex = findNearestSizeIndex(
+            testState->distanceInCm * LETTER_SIZE_TO_DISTANCE_RATIO);
+        return letter;
     }
+
+    if (testState->nOfChecksDone == 1) {
+        letter.sizeIndex =
+            sizeIndexInRange(testState->shownLettersSizeIndexes[0]
+                + (testState->shownLettersCorrectness[0] ? -2 : 2));
+        return letter;
+    }
+
+    letter.sizeIndex =
+        sizeIndexInRange(testState->shownLettersSizeIndexes[0]
+            + (testState->shownLettersCorrectness[0] ? -1 : 1));
+    return letter;
+}
+
+void snellenUpdateState(SnellenTestState* testState, const SnellenLetter letter, const bool correct) {
+    testState->shownLettersSizeIndexes[testState->nOfChecksDone] = letter.sizeIndex;
+    testState->shownLettersCorrectness[testState->nOfChecksDone] = correct;
+    testState->nOfChecksDone++;
+
+    testState->lastTwoCharacters[1] = testState->lastTwoCharacters[0];
+    testState->lastTwoCharacters[0] = letter.character;
 }

@@ -11,5 +11,7 @@ enum KeypadDigitReturnCodes {
 
 uint16_t swapEndianness(uint16_t x);
 int keypadCodeToDigit(uint16_t code);
+int min(const int a, const int b);
+int max(const int a, const int b);
 
 #endif // _UTIL_
