@@ -16,62 +16,50 @@
 // multiply distance in centimeters by this value to get letter size in pixels for a 6/6 test
 #define LETTER_SIZE_TO_DISTANCE_RATIO 0.13222193633f
 
-// TODO fill this according to generated letters in ascending order
-const uint16_t availableSizes[] = { 10, 20, 30, 40, 50 };
-const char charsToOmit[] = { 'I', 'J', 'M', 'Q', 'W', 'X' };
+const uint16_t availableSizes[] = { 25, 32, 42, 55, 71, 93, 120, 156, 203, 264, 343, 446, 580 };
+const char characterSet[] = { 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'K', 'L', 'N', 'O', 'P', 'R', 'S', 'T', 'U', 'V', 'Y', 'Z' };
 
 uint16_t getDistanceFromUser() {
-    char input[4];
-    int inputLength = 0;
+    uint16_t distance;
     while (true) {
         if (keypadPendingRead) {
-            const int result = keypadCodeToDigit(readKeypad());
+            const int input = keypadCodeToDigit(readKeypad());
 
             // ignore wrong code
-            if (result == CODE_IGNORE) {
+            if (input == CODE_IGNORE) {
                 continue;
             }
 
             // accept distance
-            if (result == CODE_ENTER) {
+            if (input == CODE_ENTER) {
                 break;
             }
 
-            if (inputLength >= sizeof(input) + 1) {
-                continue;
-            }
-
-            if (result == CODE_BACKSPACE) {
+            if (input == CODE_BACKSPACE) {
                 // remove character
-                if (inputLength > 0) {
-                    inputLength--;
-                    input[inputLength] = '\0';
+                if (distance == 0) {
+                    continue;
                 }
+
+                distance /= 10;
             }
             else {
                 // add character
-                input[inputLength] = '0' + result;
-                input[inputLength + 1] = '\0';
-                inputLength++;
+                if (distance >= 1000) {
+                    continue;
+                }
+
+                distance *= 10;
+                distance += input;
             }
 
-            print(input);
-            print("\r\n");
-
-            // TODO show as meters?
-            char textData[4 + sizeof(input)] = "\x00\x20\x00\x20";
-            strcpy(textData + 4, input);
-            ePaperSendCommand(EPAPER_CLEAR_SCREEN, NULL, 0);
-            ePaperSendCommand(EPAPER_DISPLAY_TEXT, textData, strlen(input) + 5);
-            ePaperSendCommand(EPAPER_REFRESH, NULL, 0);
-
-            char buffer[32];
-            sprintf(buffer, "strlen: %d\r\n", strlen(input) + 5);
-            print(buffer);
+            char textData[10] = "\x00\x20\x00\x20";
+            sprintf(textData + 4, "%2.2f", distance / 100.0);
+            printf("SHOW TEXT: %s\n", textData + 4);
         }
         randomNext(); // cycle prng constantly
     }
-    return atoi(input);
+    return distance;
 }
 
 void snellenDisplayLetter(SnellenLetter letter) {
@@ -113,17 +101,7 @@ uint8_t sizeIndexInRange(int8_t index) {
 char getNewCharacter(const SnellenTestState* testState) {
     char character;
     while (true) {
-        character = 'A' + randomNext() % 26;
-
-        bool omittedCharacter = false;
-        for (int i = 0; i < sizeof(charsToOmit); i++) {
-            if (character == charsToOmit[i]) {
-                omittedCharacter = true;
-                break;
-            }
-        }
-        if (omittedCharacter)
-            continue;
+        character = characterSet[randomNext() % (sizeof(characterSet) / sizeof(*characterSet))];
 
         if (character == testState->lastTwoCharacters[0])
             continue;

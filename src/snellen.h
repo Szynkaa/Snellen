@@ -5,11 +5,6 @@
 
 #define NUM_OF_TESTS 10
 
-// If currentSizeLowerBoundIndex and currentSizeUpperBoundIndex differ by more than 1,
-// the state is in the binary search phase, in which an initial size index is searched
-// for to start testing from. Otherwise, the state is in the concentrated phase, where
-// for a given size letters are shown until LETTERS_SHOWN_PER_SIZE letters have been
-// reached.
 typedef struct SnellenTestState {
     uint16_t distanceInCm;
     uint8_t nOfChecksDone;
