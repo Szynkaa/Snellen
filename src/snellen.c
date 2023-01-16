@@ -18,6 +18,7 @@
 
 // TODO fill this according to generated letters in ascending order
 const uint16_t avaliableSizes[] = { 10, 20, 30, 40, 50 };
+const char charsToOmit[] = { 'I', 'J', 'M', 'Q', 'W', 'X' };
 
 uint16_t getDistanceFromUser() {
     char input[4];
@@ -89,7 +90,7 @@ void snellenDisplayLetter(SnellenLetter letter) {
 }
 
 SnellenTestState snellenCreateTestState(int distanceInCm) {
-    SnellenTestState testState = { distanceInCm, 0 };
+    SnellenTestState testState = { distanceInCm, 0, 0 };
     testState.lastTwoCharacters[0] = '\0';
     testState.lastTwoCharacters[1] = '\0';
     return testState;
@@ -109,38 +110,95 @@ uint8_t sizeIndexInRange(uint8_t index) {
     return min(sizeof(avaliableSizes), max(0, index));
 }
 
-// basic size changing
-SnellenLetter snellenGetNextLetter(const SnellenTestState* testState) {
-    SnellenLetter letter = { 'A' + (randomNext() % 26), 0 };
-    while (letter.character == testState->lastTwoCharacters[0]
-        || letter.character == testState->lastTwoCharacters[1]) {
-        letter.character = 'A' + randomNext() % 26;
+char getNewCharacter(const SnellenTestState* testState) {
+    char character;
+    while (true) {
+        character = 'A' + randomNext() % 26;
+
+        for (int i = 0; i < sizeof(charsToOmit); i++) {
+            if (character == charsToOmit[i])
+                continue;
+        }
+
+        if (character == testState->lastTwoCharacters[0])
+            continue;
+
+        if (character == testState->lastTwoCharacters[1])
+            continue;
+
+        break;
     }
+
+    return character;
+}
+
+SnellenLetter snellenGetNextLetter(const SnellenTestState* testState) {
+    SnellenLetter letter = { getNewCharacter(testState), 0 };
 
     if (testState->nOfChecksDone == 0) {
         letter.sizeIndex = findNearestSizeIndex(
-            testState->distanceInCm * LETTER_SIZE_TO_DISTANCE_RATIO);
-        return letter;
-    }
-
-    if (testState->nOfChecksDone == 1) {
-        letter.sizeIndex =
-            sizeIndexInRange(testState->shownLettersSizeIndexes[0]
-                + (testState->shownLettersCorrectness[0] ? -2 : 2));
+            testState->distanceInCm * 2 * LETTER_SIZE_TO_DISTANCE_RATIO);
         return letter;
     }
 
     letter.sizeIndex =
         sizeIndexInRange(testState->shownLettersSizeIndexes[0]
-            + (testState->shownLettersCorrectness[0] ? -1 : 1));
+            + (testState->changeDirection));
     return letter;
 }
 
 void snellenUpdateState(SnellenTestState* testState, const SnellenLetter letter, const bool correct) {
+    const uint8_t indexDiff = testState->shownLettersSizeIndexes[testState->nOfChecksDone - 1] - letter.sizeIndex;
+
+    if (testState->nOfChecksDone == 0) {
+        testState->changeDirection = correct ? -2 : 2;
+    }
+    else if (abs(indexDiff) == 2) {
+        if (testState->shownLettersCorrectness[testState->nOfChecksDone - 1] != correct)
+            testState->changeDirection = testState->changeDirection / -2;
+    }
+    else {
+        testState->changeDirection = correct ? -1 : 1;
+    }
+
     testState->shownLettersSizeIndexes[testState->nOfChecksDone] = letter.sizeIndex;
     testState->shownLettersCorrectness[testState->nOfChecksDone] = correct;
     testState->nOfChecksDone++;
 
     testState->lastTwoCharacters[1] = testState->lastTwoCharacters[0];
     testState->lastTwoCharacters[0] = letter.character;
+}
+
+void snellenCalculateAndShowResult(const SnellenTestState* testState) {
+    uint8_t scores[sizeof(avaliableSizes)];
+    for (int i = 0; i < sizeof(scores); ++i)
+        scores[i] = 0;
+
+    for (int i = 0; i < NUM_OF_TESTS; ++i)
+        scores[testState->shownLettersSizeIndexes[i]] += testState->shownLettersCorrectness[i];
+
+    int i = 0;
+    for (;i < sizeof(scores); ++i)
+        if (scores[i]) break;
+
+    // result size is average of two best sizes with number of correct guesses as weight
+    unsigned scoreSum = 0;
+    uint8_t scoreCounter = 0;
+    for (int k = 0; k < 2 && i < sizeof(scores); ++k, ++i) {
+        scoreCounter += scores[i];
+        scoreSum += scores[i] * avaliableSizes[i];
+    }
+
+    char textData[16] = "\x00\x20\x00\x20try again";
+    int textLength = 9;
+    if (scoreCounter != 0) {
+        // convert to x in 6/x result notation
+        const float result = (scoreSum / (float)scoreSum)
+            * (testState->distanceInCm * LETTER_SIZE_TO_DISTANCE_RATIO) * 6;
+        textLength = sprintf(textData + 4, "6/%d", (int)round(result))
+    }
+
+    ePaperSendCommand(EPAPER_CLEAR_SCREEN, NULL, 0);
+    ePaperSendCommand(EPAPER_DISPLAY_TEXT, textData, textLength + 5);
+    ePaperSendCommand(EPAPER_REFRESH, NULL, 0);
 }

@@ -80,5 +80,7 @@ int main() {
         snellenUpdateState(&testState, letter, isCorrect);
     }
 
-    // TODO add calculation of result
+    snellenCalculateAndShowResult(&testState);
+
+    while (true);
 }
