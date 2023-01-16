@@ -65,7 +65,7 @@ int main() {
 
         SnellenLetter letter = snellenGetNextLetter(&testState);
         snellenDisplayLetter(letter);
-        waitSysTick(2);
+        waitSysTick(2000);
 
         sprintf(printBuffer, "Showing character %c with sizeIndex %d\r\n", letter.character, letter.sizeIndex);
         print(printBuffer);
