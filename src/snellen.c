@@ -54,8 +54,14 @@ uint16_t getDistanceFromUser() {
             }
 
             char textData[10] = "\x00\x20\x00\x20";
-            sprintf(textData + 4, "%2.2f", distance / 100.0);
-            printf("SHOW TEXT: %s\n", textData + 4);
+            int textDataLength = sprintf(textData + 4, "%2.2f", distance / 100.0);
+            ePaperSendCommand(EPAPER_CLEAR_SCREEN, NULL, 0);
+            ePaperSendCommand(EPAPER_DISPLAY_TEXT, textData, textDataLength + 5);
+            ePaperSendCommand(EPAPER_REFRESH, NULL, 0);
+
+            char buffer[32];
+            sprintf(buffer, "inputted distance: %d\r\n", distance);
+            print(buffer);
         }
         randomNext(); // cycle prng constantly
     }
