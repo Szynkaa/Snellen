@@ -30,8 +30,8 @@ volatile enum EPaperRefreshStatus {
 } ePaperRefreshStatus = NO_REFRESH_IN_QUEUE;
 
 void commandHistoryEnqueue(const EPaperCommand command) {
-    commandHistoryEnd = (commandHistoryEnd + 1) % COMMAND_HISTORY_SIZE;
     commandHistory[commandHistoryEnd] = command;
+    commandHistoryEnd = (commandHistoryEnd + 1) % COMMAND_HISTORY_SIZE;
 }
 
 EPaperCommand commandHistoryDequeue() {

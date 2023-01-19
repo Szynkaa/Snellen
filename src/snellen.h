@@ -20,6 +20,7 @@ typedef struct SnellenLetter {
 } SnellenLetter;
 
 uint16_t getDistanceFromUser();
+void displayDistanceScreen(uint16_t distance);
 SnellenTestState snellenCreateTestState(int distanceInCm);
 void snellenDisplayLetter(SnellenLetter letter);
 SnellenLetter snellenGetNextLetter(const SnellenTestState* testState);

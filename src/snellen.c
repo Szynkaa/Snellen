@@ -16,11 +16,14 @@
 // multiply distance in centimeters by this value to get letter size in pixels for a 6/6 test
 #define LETTER_SIZE_TO_DISTANCE_RATIO 0.13222193633f
 
-const uint16_t availableSizes[] = { 25, 32, 42, 55, 71, 93, 120, 156, 203, 264, 343, 446, 580 };
-const char characterSet[] = { 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'K', 'L', 'N', 'O', 'P', 'R', 'S', 'T', 'U', 'V', 'Y', 'Z' };
+const uint16_t availableSizes[] = { 20, 26, 35, 46, 61, 81, 108, 143, 189, 250, 331, 438, 570 };
+const char characterSet[] = { 'A', 'B', 'C', 'D', 'E', 'F', 'H', 'K', 'L', 'N', 'O', 'P', 'R', 'S', 'T', 'U', 'V', 'Y', 'Z' };
 
 uint16_t getDistanceFromUser() {
-    uint16_t distance;
+    uint16_t distance = 0;
+
+    displayDistanceScreen(distance);
+
     while (true) {
         if (keypadPendingRead) {
             const int input = keypadCodeToDigit(readKeypad());
@@ -32,7 +35,12 @@ uint16_t getDistanceFromUser() {
 
             // accept distance
             if (input == CODE_ENTER) {
-                break;
+                if (distance > 0) {
+                    break;
+                }
+                else {
+                    continue;
+                }
             }
 
             if (input == CODE_BACKSPACE) {
@@ -53,11 +61,7 @@ uint16_t getDistanceFromUser() {
                 distance += input;
             }
 
-            char textData[10] = "\x00\x20\x00\x20";
-            int textDataLength = sprintf(textData + 4, "%2.2f", distance / 100.0);
-            ePaperSendCommand(EPAPER_CLEAR_SCREEN, NULL, 0);
-            ePaperSendCommand(EPAPER_DISPLAY_TEXT, textData, textDataLength + 5);
-            ePaperSendCommand(EPAPER_REFRESH, NULL, 0);
+            displayDistanceScreen(distance);
 
             char buffer[32];
             sprintf(buffer, "inputted distance: %d\r\n", distance);
@@ -66,6 +70,33 @@ uint16_t getDistanceFromUser() {
         randomNext(); // cycle prng constantly
     }
     return distance;
+}
+
+void displayDistanceScreen(uint16_t distance) {
+    ePaperSendCommand(EPAPER_CLEAR_SCREEN, NULL, 0);
+
+    {
+        char textData[11] = "\x01\x00\x01\x00";
+        int textDataLength = sprintf(textData + 4, "%.2fm", distance / 100.0);
+        ePaperSendCommand(EPAPER_DISPLAY_TEXT, textData, textDataLength + 5);
+    }
+
+    {
+        char textData[40] = "\x00\x80\x00\xa0" "Wprowadz odleglosc:";
+        ePaperSendCommand(EPAPER_DISPLAY_TEXT, textData, strlen(textData + 4) + 5);
+    }
+
+    {
+        char textData[24] = "\x00\x80\x01\x60" "C  -  zatwierdz";
+        ePaperSendCommand(EPAPER_DISPLAY_TEXT, textData, strlen(textData + 4) + 5);
+    }
+
+    {
+        char textData[24] = "\x00\x80\x01\xa0" "D  -  usun";
+        ePaperSendCommand(EPAPER_DISPLAY_TEXT, textData, strlen(textData + 4) + 5);
+    }
+
+    ePaperSendCommand(EPAPER_REFRESH, NULL, 0);
 }
 
 void snellenDisplayLetter(SnellenLetter letter) {
@@ -77,6 +108,10 @@ void snellenDisplayLetter(SnellenLetter letter) {
     memcpy(data, &xpos, sizeof(xpos));
     memcpy(data + 2, &ypos, sizeof(ypos));
     const int filenameLength = sprintf(data + 4, "%c_%d.bmp", letter.character, size);
+
+    print("Displaying image: ");
+    print(data + 4);
+    print("\r\n");
 
     ePaperSendCommand(EPAPER_CLEAR_SCREEN, NULL, 0);
     ePaperSendCommand(EPAPER_DISPLAY_IMAGE, data, filenameLength + 5);
@@ -180,15 +215,24 @@ void snellenCalculateAndShowResult(const SnellenTestState* testState) {
         scoreSum += scores[i] * availableSizes[i];
     }
 
-    char textData[16] = "\x00\x20\x00\x20try again";
-    int textLength = 9;
-    if (scoreCounter != 0) {
-        // convert to x in 6/x result notation
-        const float result = ((float)scoreSum / scoreCounter) / (testState->distanceInCm * LETTER_SIZE_TO_DISTANCE_RATIO) * 6;
-        textLength = sprintf(textData + 4, "6/%d", (int)round(result));
+    ePaperSendCommand(EPAPER_CLEAR_SCREEN, NULL, 0);
+
+    {
+        char textData[16] = "\x01\x00\x01\x00" "Poza skala";
+        int textLength = 10;
+        if (scoreCounter != 0) {
+            // convert to x in 6/x result notation
+            const float result = ((float)scoreSum / scoreCounter) / (testState->distanceInCm * LETTER_SIZE_TO_DISTANCE_RATIO) * 6;
+            textLength = sprintf(textData + 4, "6/%d", (int)round(result));
+        }
+
+        ePaperSendCommand(EPAPER_DISPLAY_TEXT, textData, textLength + 5);
     }
 
-    ePaperSendCommand(EPAPER_CLEAR_SCREEN, NULL, 0);
-    ePaperSendCommand(EPAPER_DISPLAY_TEXT, textData, textLength + 5);
+    {
+        char textData[40] = "\x00\x80\x00\xa0" "Wynik testu:";
+        ePaperSendCommand(EPAPER_DISPLAY_TEXT, textData, strlen(textData + 4) + 5);
+    }
+
     ePaperSendCommand(EPAPER_REFRESH, NULL, 0);
 }

@@ -19,12 +19,12 @@ void EINT3_IRQHandler() {
 
 volatile int letterGuessedCorrectly;
 
-void key0Handler() {
-    letterGuessedCorrectly = -1;
+void key2Handler() {
+    letterGuessedCorrectly = 1;
 }
 
 void key1Handler() {
-    letterGuessedCorrectly = 1;
+    letterGuessedCorrectly = -1;
 }
 
 int main() {
@@ -35,13 +35,15 @@ int main() {
     randomSetSeed(4079839681u);
 
     initializeKeys();
-    key0Callback = key0Handler;
+    key2Callback = key2Handler;
     key1Callback = key1Handler;
 
     NVIC_EnableIRQ(EINT3_IRQn);
 
     // Main logic
     print("**program initialized**\r\n");
+
+    ePaperSendCommand(EPAPER_CLEAR_SCREEN, NULL, 0);
 
     const unsigned char colorData[] = { 0x00, 0x03 };
     ePaperSendCommand(EPAPER_SET_COLORS, colorData, sizeof(colorData));
@@ -64,11 +66,11 @@ int main() {
         }
 
         SnellenLetter letter = snellenGetNextLetter(&testState);
-        snellenDisplayLetter(letter);
-        waitSysTick(2000);
-
         sprintf(printBuffer, "Showing character %c with sizeIndex %d\r\n", letter.character, letter.sizeIndex);
         print(printBuffer);
+        snellenDisplayLetter(letter);
+
+        waitSysTick(2000);
 
         letterGuessedCorrectly = 0;
         while (letterGuessedCorrectly == 0);

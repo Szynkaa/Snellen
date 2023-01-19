@@ -8,7 +8,7 @@
 volatile int eint0DeadTime = 0;
 volatile int eint1DeadTime = 0;
 
-void (*key0Callback)() = NULL;
+void (*key2Callback)() = NULL;
 void (*key1Callback)() = NULL;
 
 void EINT0_IRQHandler() {
@@ -18,8 +18,8 @@ void EINT0_IRQHandler() {
         return;
     }
 
-    if (key0Callback) {
-        key0Callback();
+    if (key2Callback) {
+        key2Callback();
     }
 
     eint0DeadTime = 200;
@@ -40,7 +40,7 @@ void EINT1_IRQHandler() {
 }
 
 void initializeKeys() {
-    // Key 0
+    // Key 2
     PIN_Configure(2, 10, 0b01, 0, 0);
 
     LPC_SC->EXTMODE = (LPC_SC->EXTMODE & 0b1111) | 1 << 0;
